@@ -146,19 +146,20 @@ intraday = data_io.is_intraday(prices.index)
 bars_desc = data_io.bar_size(prices.index)                                   # "daily", "1-hour", ...
 bar_word = {"daily": "day", "weekly": "week", "monthly": "month"}.get(bars_desc, "bar")
 first_day, last_day = prices.index[0].date(), prices.index[-1].date()
+ten_years_ago = max(first_day, (pd.Timestamp(last_day) - pd.DateOffset(years=10)).date())   # the default test start
 
 # ----------------------------------------------------------------------------------------
 # Sidebar: rules
 # ----------------------------------------------------------------------------------------
 with st.sidebar:
     c1, c2 = st.columns(2)
-    start = c1.date_input("Test from", first_day, min_value=first_day, max_value=last_day, format="YYYY-MM-DD")
+    start = c1.date_input("Test from", ten_years_ago, min_value=first_day, max_value=last_day, format="YYYY-MM-DD")
     end = c2.date_input("Test to", last_day, min_value=first_day, max_value=last_day, format="YYYY-MM-DD")
     if start > end:
         start, end = end, start
         st.caption("'Test from' was after 'Test to', so the two dates were swapped.")
-    st.caption("The charts and results cover these dates. The indicators also use the bars before them, so "
-               "they're warmed up from the first day.")
+    st.caption("The charts and results cover these dates: the last 10 years unless you change them. The "
+               "indicators also use the bars before them, so they're warmed up from the first test day.")
 
     st.header("Buy rules")
     atr_entry = ATR_MODES[st.radio("ATR Trend Bands", list(ATR_MODES), key="bt_atr_entry",
@@ -567,8 +568,9 @@ length {atr_length} and multiplier {atr_mult:g}. They're green while the trend i
 **Turning the words into numbers.**
 {chr(10).join(terms) if terms else "- No buy or sell rule with a threshold is switched on."}
 {buying_more}
-**Test period.** The indicators are computed on all the prices, so they're already warmed up on the first test
-day. Trades, the equity curve, buy & hold and every statistic cover only the test dates.
+**Test period.** The last 10 years by default; change it with "Test from" and "Test to" in the sidebar. The
+indicators are computed on all the prices, so they're already warmed up on the first test day. Trades, the
+equity curve, buy & hold and every statistic cover only the test dates.
 
 **What the test leaves out:** taxes, borrowing costs, dividends (Netflix pays none) and gaps through a stop,
 beyond the fill rules above.
